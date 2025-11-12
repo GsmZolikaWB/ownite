@@ -1,0 +1,79 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  password      String
+  name          String
+  role          Role         @default(USER)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // Invitations sent by this user
+  sentInvitations     Invitation[] @relation("InvitationSender")
+  // Invitation used to register (if any)
+  usedInvitation      Invitation?  @relation("InvitationRecipient")
+
+  @@index([email])
+}
+
+model Invitation {
+  id            String       @id @default(uuid())
+  email         String
+  token         String       @unique
+  senderId      String
+  sender        User         @relation("InvitationSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  // If the invitation was used
+  used          Boolean      @default(false)
+  usedBy        User?        @relation("InvitationRecipient", fields: [usedById], references: [id])
+  usedById      String?      @unique
+  usedAt        DateTime?
+
+  expiresAt     DateTime
+  createdAt     DateTime     @default(now())
+
+  @@index([token])
+  @@index([email])
+}
+
+model Product {
+  id            String       @id @default(uuid())
+  name          String
+  description   String
+  price         Float
+  imageUrl      String?
+  category      String
+  inStock       Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([category])
+}
+
+model ContactMessage {
+  id            String       @id @default(uuid())
+  name          String
+  email         String
+  subject       String
+  message       String
+  read          Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+
+  @@index([createdAt])
+  @@index([read])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
