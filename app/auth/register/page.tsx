@@ -56,7 +56,8 @@ function RegisterForm() {
       } else {
         router.push('/auth/login?registered=true')
       }
-    } catch (error) {
+    } catch (err) {
+    console.error(err)
       setError('Hiba történt a regisztráció során')
     } finally {
       setIsLoading(false)

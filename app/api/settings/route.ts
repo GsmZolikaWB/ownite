@@ -32,8 +32,9 @@ export async function GET() {
     }
 
     return NextResponse.json(settings)
-  } catch (error) {
+  } catch (err) {
     console.error('Settings fetch error:', error)
+    console.error(err);
     return NextResponse.json(
       { error: 'Failed to fetch settings' },
       { status: 500 }
@@ -66,9 +67,10 @@ export async function PUT(request: Request) {
     }
 
     return NextResponse.json(settings)
-  } catch (error) {
+  } catch (err) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
+      console.error(err);
+    return NextResponse.json(
         { error: 'Validation error', details: error.errors },
         { status: 400 }
       )

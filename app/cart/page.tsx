@@ -2,12 +2,13 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useCart } from '@/app/context/CartContext'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export default function CartPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
   const { items, updateQuantity, removeItem, total, itemCount } = useCart()
 
@@ -57,11 +58,15 @@ export default function CartPage() {
                 >
                   <div className="flex items-center space-x-4">
                     {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="w-24 h-24 object-cover rounded-xl"
-                      />
+                      <div className="relative w-24 h-24 rounded-xl overflow-hidden">
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                          sizes="96px"
+                        />
+                      </div>
                     ) : (
                       <div className="w-24 h-24 bg-gray-200 rounded-xl flex items-center justify-center">
                         <ShoppingBag className="w-8 h-8 text-gray-400" />

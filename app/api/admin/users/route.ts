@@ -65,8 +65,9 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ message: 'User created', userId: user.id }, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+  } catch (err) {
+    console.error('Error creating user:', err)
+    if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error' }, { status: 400 })
     }
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

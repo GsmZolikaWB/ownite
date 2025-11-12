@@ -1,17 +1,27 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Search, Filter, Package, ShoppingCart, Send, Plus } from 'lucide-react'
+import Image from 'next/image'
+import { Search, Filter, Package, Send, Plus } from 'lucide-react'
 import { useCart } from '@/app/context/CartContext'
+
+interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  category: string
+  imageUrl?: string
+}
 
 export default function ShopPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { addItem } = useCart()
-  const [products, setProducts] = useState<any[]>([])
-  const [filteredProducts, setFilteredProducts] = useState<any[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -22,32 +32,20 @@ export default function ShopPage() {
     return fullName?.split(' ')[0] || fullName
   }
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/login')
-    } else if (status === 'authenticated') {
-      fetchProducts()
-    }
-  }, [status])
-
-  useEffect(() => {
-    filterProducts()
-  }, [searchQuery, selectedCategory, products])
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch('/api/products')
       const data = await res.json()
       setProducts(data)
       setFilteredProducts(data)
-    } catch (error) {
-      console.error('Error fetching products:', error)
+    } catch (err) {
+      console.error('Error fetching products:', err)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
-  const filterProducts = () => {
+  const filterProducts = useCallback(() => {
     let filtered = products
 
     if (selectedCategory !== 'all') {
@@ -63,7 +61,19 @@ export default function ShopPage() {
     }
 
     setFilteredProducts(filtered)
-  }
+  }, [products, searchQuery, selectedCategory])
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/login')
+    } else if (status === 'authenticated') {
+      fetchProducts()
+    }
+  }, [status, router, fetchProducts])
+
+  useEffect(() => {
+    filterProducts()
+  }, [filterProducts])
 
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,10 +90,11 @@ export default function ShopPage() {
         setInviteEmail('')
         setShowInviteModal(false)
       } else {
-        const error = await res.json()
-        alert(error.error || 'Hiba történt a meghívó küldése során')
+        const errorData = await res.json()
+        alert(errorData.error || 'Hiba történt a meghívó küldése során')
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error sending invitation:', err)
       alert('Hiba történt a meghívó küldése során')
     }
   }
@@ -170,12 +181,14 @@ export default function ShopPage() {
                 key={product.id}
                 className="bg-white rounded-2xl overflow-hidden card-elevated hover:scale-105 transition-transform duration-300"
               >
-                <div className="aspect-video bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                <div className="aspect-video bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center relative">
                   {product.imageUrl ? (
-                    <img
+                    <Image
                       src={product.imageUrl}
                       alt={product.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   ) : (
                     <Package className="w-16 h-16 text-gray-400" />

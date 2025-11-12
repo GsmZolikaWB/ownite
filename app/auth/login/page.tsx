@@ -33,7 +33,8 @@ export default function LoginPage() {
         router.push('/shop')
         router.refresh()
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Login error:', err)
       setError('Hiba történt a bejelentkezés során')
     } finally {
       setIsLoading(false)

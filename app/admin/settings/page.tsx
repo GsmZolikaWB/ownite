@@ -23,6 +23,18 @@ export default function SettingsPage() {
     aboutText: '',
   })
 
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings')
+      const data = await res.json()
+      setSettings(data)
+    } catch (err) {
+      console.error('Error fetching settings:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/login')
@@ -31,19 +43,8 @@ export default function SettingsPage() {
     } else if (status === 'authenticated') {
       fetchSettings()
     }
-  }, [status, session])
-
-  const fetchSettings = async () => {
-    try {
-      const res = await fetch('/api/settings')
-      const data = await res.json()
-      setSettings(data)
-    } catch (error) {
-      console.error('Error fetching settings:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, session, router])
 
   const handleSave = async () => {
     setSaving(true)
@@ -59,7 +60,8 @@ export default function SettingsPage() {
       } else {
         throw new Error('Failed to save')
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error saving settings:', err)
       alert('Hiba történt a mentés során')
     } finally {
       setSaving(false)

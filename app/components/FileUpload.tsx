@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Image from 'next/image'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
 
 interface FileUploadProps {
@@ -49,7 +50,8 @@ export default function FileUpload({
 
       const data = await response.json()
       onUpload(data.url)
-    } catch (error) {
+    } catch (err) {
+    console.error(err)
       console.error('Upload error:', error)
       alert('Hiba történt a fájl feltöltése során')
       setPreview(currentImage || null)
@@ -73,15 +75,17 @@ export default function FileUpload({
       <div className="flex items-center space-x-4">
         {preview ? (
           <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-300">
-            <img
+            <Image
               src={preview}
               alt="Preview"
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="128px"
             />
             <button
               type="button"
               onClick={handleRemove}
-              className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+              className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors z-10"
             >
               <X className="w-4 h-4" />
             </button>

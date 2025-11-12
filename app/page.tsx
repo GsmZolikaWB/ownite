@@ -43,7 +43,9 @@ export default function Home() {
       } else {
         setSubmitStatus('error')
       }
-    } catch (error) {
+    } catch (err) {
+    console.error(err)
+      console.error(err);
       setSubmitStatus('error')
     } finally {
       setIsSubmitting(false)

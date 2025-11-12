@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
@@ -17,14 +17,50 @@ import FileUpload from '@/app/components/FileUpload'
 
 type Tab = 'users' | 'invitations' | 'products' | 'messages'
 
+interface User {
+  id: string
+  name: string
+  email: string
+  role: string
+  createdAt: string
+}
+
+interface Invitation {
+  id: string
+  email: string
+  token: string
+  used: boolean
+  expiresAt: string
+  createdAt: string
+}
+
+interface Product {
+  id: string
+  name: string
+  description: string
+  price: number
+  category: string
+  imageUrl?: string
+}
+
+interface Message {
+  id: string
+  name: string
+  email: string
+  subject: string
+  message: string
+  read: boolean
+  createdAt: string
+}
+
 export default function AdminPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('users')
-  const [users, setUsers] = useState<any[]>([])
-  const [invitations, setInvitations] = useState<any[]>([])
-  const [products, setProducts] = useState<any[]>([])
-  const [messages, setMessages] = useState<any[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [invitations, setInvitations] = useState<Invitation[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   // User creation form
@@ -49,17 +85,7 @@ export default function AdminPage() {
     imageUrl: '',
   })
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/login')
-    } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
-      router.push('/')
-    } else if (status === 'authenticated') {
-      fetchData()
-    }
-  }, [status, session, activeTab])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true)
     try {
       if (activeTab === 'users') {
@@ -75,12 +101,22 @@ export default function AdminPage() {
         const res = await fetch('/api/admin/messages')
         setMessages(await res.json())
       }
-    } catch (error) {
-      console.error('Error fetching data:', error)
+    } catch (err) {
+      console.error('Error fetching data:', err)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [activeTab])
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/login')
+    } else if (status === 'authenticated' && session?.user?.role !== 'ADMIN') {
+      router.push('/')
+    } else if (status === 'authenticated') {
+      fetchData()
+    }
+  }, [status, session, activeTab, router, fetchData])
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,7 +131,8 @@ export default function AdminPage() {
         fetchData()
         alert('Felhasználó sikeresen létrehozva!')
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error creating user:', err)
       alert('Hiba történt a felhasználó létrehozása során')
     }
   }
@@ -113,7 +150,8 @@ export default function AdminPage() {
         fetchData()
         alert('Meghívó sikeresen elküldve!')
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error sending invitation:', err)
       alert('Hiba történt a meghívó küldése során')
     }
   }
@@ -134,7 +172,8 @@ export default function AdminPage() {
         fetchData()
         alert('Termék sikeresen létrehozva!')
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error creating product:', err)
       alert('Hiba történt a termék létrehozása során')
     }
   }
@@ -147,7 +186,8 @@ export default function AdminPage() {
         fetchData()
         alert('Felhasználó sikeresen törölve!')
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error deleting user:', err)
       alert('Hiba történt a felhasználó törlése során')
     }
   }
@@ -160,7 +200,8 @@ export default function AdminPage() {
         fetchData()
         alert('Termék sikeresen törölve!')
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error deleting product:', err)
       alert('Hiba történt a termék törlése során')
     }
   }

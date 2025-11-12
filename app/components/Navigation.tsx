@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { User, ShoppingCart, LogOut, Settings, Cog } from 'lucide-react'
@@ -32,7 +33,9 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-2">
             {logo ? (
-              <img src={logo} alt="Logo" className="h-10 w-auto" />
+              <div className="relative h-10 w-auto min-w-[40px]">
+                <Image src={logo} alt="Logo" height={40} width={120} className="h-10 w-auto object-contain" />
+              </div>
             ) : (
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
                 <span className="text-white font-bold text-xl">M</span>

@@ -86,9 +86,10 @@ export async function POST(request: Request) {
       { message: 'Registration successful' },
       { status: 201 }
     )
-  } catch (error) {
+  } catch (err) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
+      console.error(err);
+    return NextResponse.json(
         { error: 'Validációs hiba', details: error.errors },
         { status: 400 }
       )

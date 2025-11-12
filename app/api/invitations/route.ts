@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiry
 
-    const invitation = await prisma.invitation.create({
+    await prisma.invitation.create({
       data: {
         email,
         token,
@@ -75,8 +75,8 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     )
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+  } catch (err) {
+    if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error' }, { status: 400 })
     }
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
