@@ -171,7 +171,9 @@ SQLite adatbázis Prisma ORM-mel:
 3. Töltse ki a regisztrációs űrlapot
 4. Jelentkezzen be az új fiókkal
 
-## 🚀 Production Build
+## 🚀 Production Build & Deployment
+
+### Quick Start
 
 ```bash
 # Build készítése
@@ -180,6 +182,36 @@ npm run build
 # Production szerver indítása
 npm start
 ```
+
+### 🔄 Egy-parancs Frissítés (Production)
+
+**Teljes frissítés** (dependencies, migrations, build):
+```bash
+./deploy.sh
+```
+
+**Gyors frissítés** (csak kód változás):
+```bash
+./quick-update.sh
+```
+
+### Process Management
+
+**PM2 használata (ajánlott):**
+```bash
+npm install -g pm2
+pm2 start ecosystem.config.js
+pm2 save
+```
+
+**Systemd service:**
+```bash
+sudo cp mechatronics-portfolio.service /etc/systemd/system/
+sudo systemctl enable mechatronics-portfolio
+sudo systemctl start mechatronics-portfolio
+```
+
+📘 **Részletes deployment útmutató:** Lásd a [DEPLOYMENT.md](./DEPLOYMENT.md) fájlt!
 
 ## 📄 License
 

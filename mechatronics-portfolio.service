@@ -1,0 +1,18 @@
+[Unit]
+Description=Mechatronics Portfolio Next.js Application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/home/user/ownite
+Environment="NODE_ENV=production"
+Environment="PORT=3000"
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/mechatronics-portfolio.log
+StandardError=append:/var/log/mechatronics-portfolio-error.log
+
+[Install]
+WantedBy=multi-user.target

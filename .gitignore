@@ -36,3 +36,11 @@ next-env.d.ts
 # prisma
 prisma/*.db
 prisma/*.db-journal
+
+# deployment logs
+logs/
+*.log
+
+# pm2
+.pm2
+.pm2.pid
