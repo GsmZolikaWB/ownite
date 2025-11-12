@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Product created', product }, { status: 201 })
   } catch (err) {
     console.error(err)
-    if (error instanceof z.ZodError) {
+    if (err instanceof z.ZodError) {
       console.error(err);
     return NextResponse.json({ error: 'Validation error' }, { status: 400 })
     }

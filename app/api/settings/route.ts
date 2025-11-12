@@ -33,7 +33,7 @@ export async function GET() {
 
     return NextResponse.json(settings)
   } catch (err) {
-    console.error('Settings fetch error:', error)
+    console.error('Settings fetch error:', err)
     console.error(err);
     return NextResponse.json(
       { error: 'Failed to fetch settings' },
@@ -68,15 +68,15 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(settings)
   } catch (err) {
-    if (error instanceof z.ZodError) {
+    if (err instanceof z.ZodError) {
       console.error(err);
     return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: err.errors },
         { status: 400 }
       )
     }
 
-    console.error('Settings update error:', error)
+    console.error('Settings update error:', err)
     return NextResponse.json(
       { error: 'Failed to update settings' },
       { status: 500 }

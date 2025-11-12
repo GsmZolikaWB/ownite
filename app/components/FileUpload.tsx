@@ -52,7 +52,7 @@ export default function FileUpload({
       onUpload(data.url)
     } catch (err) {
     console.error(err)
-      console.error('Upload error:', error)
+      console.error('Upload error:', err)
       alert('Hiba történt a fájl feltöltése során')
       setPreview(currentImage || null)
     } finally {

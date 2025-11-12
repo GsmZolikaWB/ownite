@@ -87,15 +87,15 @@ export async function POST(request: Request) {
       { status: 201 }
     )
   } catch (err) {
-    if (error instanceof z.ZodError) {
-      console.error(err);
-    return NextResponse.json(
-        { error: 'Validációs hiba', details: error.errors },
+    if (err instanceof z.ZodError) {
+      console.error('Validation error:', err)
+      return NextResponse.json(
+        { error: 'Validációs hiba', details: err.errors },
         { status: 400 }
       )
     }
 
-    console.error('Registration error:', error)
+    console.error('Registration error:', err)
     return NextResponse.json(
       { error: 'Hiba történt a regisztráció során' },
       { status: 500 }

@@ -27,15 +27,15 @@ export async function POST(request: Request) {
     )
   } catch (err) {
     console.error(err)
-    if (error instanceof z.ZodError) {
+    if (err instanceof z.ZodError) {
       console.error(err);
     return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: err.errors },
         { status: 400 }
       )
     }
 
-    console.error('Contact form error:', error)
+    console.error('Contact form error:', err)
     return NextResponse.json(
       { error: 'Failed to send message' },
       { status: 500 }
