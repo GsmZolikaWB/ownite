@@ -1,16 +1,45 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useCart } from '@/app/context/CartContext'
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react'
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Truck } from 'lucide-react'
 import Link from 'next/link'
+
+interface ShippingMethod {
+  id: string
+  name: string
+  description: string
+  price: number
+  estimatedDays: string
+  active: boolean
+}
 
 export default function CartPage() {
   const { status } = useSession()
   const router = useRouter()
   const { items, updateQuantity, removeItem, total, itemCount } = useCart()
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
+  const [loadingShipping, setLoadingShipping] = useState(true)
+
+  useEffect(() => {
+    const fetchShipping = async () => {
+      try {
+        const res = await fetch('/api/admin/shipping')
+        const data = await res.json()
+        // Only show active shipping methods
+        setShippingMethods(data.filter((m: ShippingMethod) => m.active))
+      } catch (error) {
+        console.error('Error fetching shipping methods:', error)
+      } finally {
+        setLoadingShipping(false)
+      }
+    }
+
+    fetchShipping()
+  }, [])
 
   if (status === 'loading') {
     return (
@@ -132,12 +161,36 @@ export default function CartPage() {
                     <span>Termékek ({itemCount} db)</span>
                     <span>{total.toLocaleString('hu-HU')} Ft</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Szállítás</span>
-                    <span>Ingyenes</span>
+
+                  {/* Shipping Info */}
+                  <div className="border-t border-gray-200 pt-3">
+                    <div className="flex items-center text-gray-700 mb-2">
+                      <Truck className="w-4 h-4 mr-2" />
+                      <span className="font-medium">Szállítási lehetőségek:</span>
+                    </div>
+                    {loadingShipping ? (
+                      <p className="text-sm text-gray-500">Betöltés...</p>
+                    ) : shippingMethods.length > 0 ? (
+                      <div className="space-y-1">
+                        {shippingMethods.map((method) => (
+                          <div key={method.id} className="text-sm text-gray-600 flex justify-between">
+                            <span>{method.name} ({method.estimatedDays})</span>
+                            <span className="font-medium">
+                              {method.price === 0 ? 'Ingyenes' : `${method.price.toLocaleString('hu-HU')} Ft`}
+                            </span>
+                          </div>
+                        ))}
+                        <p className="text-xs text-gray-500 mt-2">
+                          *A pontos szállítási módot a pénztárnál választhatja ki
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Szállítási lehetőség még nincs beállítva</p>
+                    )}
                   </div>
+
                   <div className="border-t border-gray-200 pt-3 flex justify-between text-lg font-bold text-gray-900">
-                    <span>Összesen</span>
+                    <span>Terméköszeg</span>
                     <span>{total.toLocaleString('hu-HU')} Ft</span>
                   </div>
                 </div>

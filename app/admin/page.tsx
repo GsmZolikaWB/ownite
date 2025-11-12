@@ -12,10 +12,12 @@ import {
   Send,
   Trash2,
   Plus,
+  Truck,
+  Package,
 } from 'lucide-react'
 import FileUpload from '@/app/components/FileUpload'
 
-type Tab = 'users' | 'invitations' | 'products' | 'messages'
+type Tab = 'users' | 'invitations' | 'products' | 'messages' | 'shipping' | 'variants'
 
 interface User {
   id: string
@@ -53,6 +55,29 @@ interface Message {
   createdAt: string
 }
 
+interface ShippingMethod {
+  id: string
+  name: string
+  description: string
+  price: number
+  estimatedDays: string
+  active: boolean
+  createdAt: string
+}
+
+interface ProductVariant {
+  id: string
+  productId: string
+  name: string
+  sku: string
+  voltage?: number
+  current?: number
+  cells?: number
+  cellType?: string
+  price: number
+  stock: number
+}
+
 export default function AdminPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -61,6 +86,8 @@ export default function AdminPage() {
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [messages, setMessages] = useState<Message[]>([])
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
+  const [variants, setVariants] = useState<ProductVariant[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   // User creation form
@@ -85,6 +112,28 @@ export default function AdminPage() {
     imageUrl: '',
   })
 
+  // Shipping method form
+  const [newShipping, setNewShipping] = useState({
+    name: '',
+    description: '',
+    price: '',
+    estimatedDays: '',
+    active: true,
+  })
+
+  // Product variant form
+  const [newVariant, setNewVariant] = useState({
+    productId: '',
+    name: '',
+    sku: '',
+    voltage: '',
+    current: '',
+    cells: '',
+    cellType: '',
+    price: '',
+    stock: '',
+  })
+
   const fetchData = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -100,6 +149,12 @@ export default function AdminPage() {
       } else if (activeTab === 'messages') {
         const res = await fetch('/api/admin/messages')
         setMessages(await res.json())
+      } else if (activeTab === 'shipping') {
+        const res = await fetch('/api/admin/shipping')
+        setShippingMethods(await res.json())
+      } else if (activeTab === 'variants') {
+        const res = await fetch('/api/admin/variants')
+        setVariants(await res.json())
       }
     } catch (err) {
       console.error('Error fetching data:', err)
@@ -126,10 +181,16 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newUser),
       })
+      const data = await res.json()
+
       if (res.ok) {
         setNewUser({ name: '', email: '', password: '', role: 'USER' })
         fetchData()
         alert('Felhasználó sikeresen létrehozva!')
+      } else {
+        // Show specific error message from server
+        const errorMsg = data.error || 'Hiba történt a felhasználó létrehozása során'
+        alert(`Hiba: ${errorMsg}`)
       }
     } catch (err) {
       console.error('Error creating user:', err)
@@ -145,10 +206,15 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newInvitation),
       })
+      const data = await res.json()
+
       if (res.ok) {
         setNewInvitation({ email: '' })
         fetchData()
         alert('Meghívó sikeresen elküldve!')
+      } else {
+        const errorMsg = data.error || 'Hiba történt a meghívó küldése során'
+        alert(`Hiba: ${errorMsg}`)
       }
     } catch (err) {
       console.error('Error sending invitation:', err)
@@ -167,10 +233,15 @@ export default function AdminPage() {
           price: parseFloat(newProduct.price),
         }),
       })
+      const data = await res.json()
+
       if (res.ok) {
         setNewProduct({ name: '', description: '', price: '', category: '', imageUrl: '' })
         fetchData()
         alert('Termék sikeresen létrehozva!')
+      } else {
+        const errorMsg = data.error || 'Hiba történt a termék létrehozása során'
+        alert(`Hiba: ${errorMsg}`)
       }
     } catch (err) {
       console.error('Error creating product:', err)
@@ -206,6 +277,118 @@ export default function AdminPage() {
     }
   }
 
+  const handleCreateShipping = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await fetch('/api/admin/shipping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newShipping,
+          price: parseFloat(newShipping.price),
+        }),
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        setNewShipping({ name: '', description: '', price: '', estimatedDays: '', active: true })
+        fetchData()
+        alert('Szállítási mód sikeresen létrehozva!')
+      } else {
+        const errorMsg = data.error || 'Hiba történt a szállítási mód létrehozása során'
+        alert(`Hiba: ${errorMsg}`)
+      }
+    } catch (err) {
+      console.error('Error creating shipping method:', err)
+      alert('Hiba történt a szállítási mód létrehozása során')
+    }
+  }
+
+  const handleDeleteShipping = async (id: string) => {
+    if (!confirm('Biztosan törölni szeretné ezt a szállítási módot?')) return
+    try {
+      const res = await fetch(`/api/admin/shipping/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        fetchData()
+        alert('Szállítási mód sikeresen törölve!')
+      }
+    } catch (err) {
+      console.error('Error deleting shipping method:', err)
+      alert('Hiba történt a szállítási mód törlése során')
+    }
+  }
+
+  const handleToggleShipping = async (id: string, active: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/shipping/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: !active }),
+      })
+      if (res.ok) {
+        fetchData()
+      }
+    } catch (err) {
+      console.error('Error toggling shipping method:', err)
+      alert('Hiba történt a szállítási mód állapotának változtatása során')
+    }
+  }
+
+  const handleCreateVariant = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await fetch('/api/admin/variants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newVariant,
+          price: parseFloat(newVariant.price),
+          stock: parseInt(newVariant.stock),
+          voltage: newVariant.voltage ? parseFloat(newVariant.voltage) : undefined,
+          current: newVariant.current ? parseFloat(newVariant.current) : undefined,
+          cells: newVariant.cells ? parseInt(newVariant.cells) : undefined,
+        }),
+      })
+      const data = await res.json()
+
+      if (res.ok) {
+        setNewVariant({
+          productId: '',
+          name: '',
+          sku: '',
+          voltage: '',
+          current: '',
+          cells: '',
+          cellType: '',
+          price: '',
+          stock: '',
+        })
+        fetchData()
+        alert('Termék variáns sikeresen létrehozva!')
+      } else {
+        const errorMsg = data.error || 'Hiba történt a variáns létrehozása során'
+        alert(`Hiba: ${errorMsg}`)
+      }
+    } catch (err) {
+      console.error('Error creating variant:', err)
+      alert('Hiba történt a variáns létrehozása során')
+    }
+  }
+
+  const handleDeleteVariant = async (id: string) => {
+    if (!confirm('Biztosan törölni szeretné ezt a variánst?')) return
+    try {
+      const res = await fetch(`/api/admin/variants/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        fetchData()
+        alert('Variáns sikeresen törölve!')
+      }
+    } catch (err) {
+      console.error('Error deleting variant:', err)
+      alert('Hiba történt a variáns törlése során')
+    }
+  }
+
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
@@ -222,6 +405,8 @@ export default function AdminPage() {
     { id: 'users' as Tab, label: 'Felhasználók', icon: <Users className="w-5 h-5" /> },
     { id: 'invitations' as Tab, label: 'Meghívók', icon: <Mail className="w-5 h-5" /> },
     { id: 'products' as Tab, label: 'Termékek', icon: <ShoppingBag className="w-5 h-5" /> },
+    { id: 'variants' as Tab, label: 'Variánsok', icon: <Package className="w-5 h-5" /> },
+    { id: 'shipping' as Tab, label: 'Szállítás', icon: <Truck className="w-5 h-5" /> },
     { id: 'messages' as Tab, label: 'Üzenetek', icon: <MessageSquare className="w-5 h-5" /> },
   ]
 
@@ -494,6 +679,227 @@ export default function AdminPage() {
                   <div className="text-gray-600">{msg.message}</div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Shipping Tab */}
+        {activeTab === 'shipping' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl p-8 card-elevated">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <Truck className="w-6 h-6 mr-2" />
+                Új szállítási mód hozzáadása
+              </h2>
+              <form onSubmit={handleCreateShipping} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Név (pl. GLS futár)"
+                  required
+                  value={newShipping.name}
+                  onChange={(e) => setNewShipping({ ...newShipping, name: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="text"
+                  placeholder="Leírás"
+                  required
+                  value={newShipping.description}
+                  onChange={(e) => setNewShipping({ ...newShipping, description: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ár (Ft)"
+                  required
+                  value={newShipping.price}
+                  onChange={(e) => setNewShipping({ ...newShipping, price: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="text"
+                  placeholder="Szállítási idő (pl. 1-3 nap)"
+                  required
+                  value={newShipping.estimatedDays}
+                  onChange={(e) => setNewShipping({ ...newShipping, estimatedDays: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <button
+                  type="submit"
+                  className="md:col-span-2 bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center space-x-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Szállítási mód létrehozása</span>
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 card-elevated">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Szállítási módok</h2>
+              <div className="space-y-4">
+                {shippingMethods.map((method) => (
+                  <div
+                    key={method.id}
+                    className="flex items-center justify-between p-6 rounded-xl bg-gray-50"
+                  >
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">{method.name}</div>
+                      <div className="text-sm text-gray-600">{method.description}</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {method.price} Ft • {method.estimatedDays}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleToggleShipping(method.id, method.active)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                          method.active
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-200 text-gray-600'
+                        }`}
+                      >
+                        {method.active ? 'Aktív' : 'Inaktív'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteShipping(method.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Variants Tab */}
+        {activeTab === 'variants' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl p-8 card-elevated">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <Package className="w-6 h-6 mr-2" />
+                Új termék variáns hozzáadása
+              </h2>
+              <form onSubmit={handleCreateVariant} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <select
+                  value={newVariant.productId}
+                  onChange={(e) => setNewVariant({ ...newVariant, productId: e.target.value })}
+                  required
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                >
+                  <option value="">Válassz terméket</option>
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  placeholder="Variáns név (pl. 12V 2A)"
+                  required
+                  value={newVariant.name}
+                  onChange={(e) => setNewVariant({ ...newVariant, name: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="text"
+                  placeholder="SKU kód"
+                  required
+                  value={newVariant.sku}
+                  onChange={(e) => setNewVariant({ ...newVariant, sku: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Feszültség (V) - opcionális"
+                  value={newVariant.voltage}
+                  onChange={(e) => setNewVariant({ ...newVariant, voltage: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Áram (A) - opcionális"
+                  value={newVariant.current}
+                  onChange={(e) => setNewVariant({ ...newVariant, current: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="number"
+                  placeholder="Cellák száma - opcionális"
+                  value={newVariant.cells}
+                  onChange={(e) => setNewVariant({ ...newVariant, cells: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="text"
+                  placeholder="Cella típus (pl. Li-ion) - opcionális"
+                  value={newVariant.cellType}
+                  onChange={(e) => setNewVariant({ ...newVariant, cellType: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Ár (Ft)"
+                  required
+                  value={newVariant.price}
+                  onChange={(e) => setNewVariant({ ...newVariant, price: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <input
+                  type="number"
+                  placeholder="Készlet"
+                  required
+                  value={newVariant.stock}
+                  onChange={(e) => setNewVariant({ ...newVariant, stock: e.target.value })}
+                  className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <button
+                  type="submit"
+                  className="md:col-span-2 bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-all flex items-center justify-center space-x-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Variáns létrehozása</span>
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 card-elevated">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Termék variánsok</h2>
+              <div className="space-y-4">
+                {variants.map((variant) => (
+                  <div
+                    key={variant.id}
+                    className="flex items-center justify-between p-6 rounded-xl bg-gray-50"
+                  >
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">{variant.name}</div>
+                      <div className="text-sm text-gray-600">SKU: {variant.sku}</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {variant.voltage && `${variant.voltage}V `}
+                        {variant.current && `${variant.current}A `}
+                        {variant.cells && `${variant.cells} cellás `}
+                        {variant.cellType && `(${variant.cellType})`}
+                      </div>
+                      <div className="text-sm font-medium text-gray-700 mt-1">
+                        {variant.price} Ft • Készlet: {variant.stock} db
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteVariant(variant.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
