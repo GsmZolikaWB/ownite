@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { User, ShoppingCart, LogOut, Settings, Cog } from 'lucide-react'
+import { useCart } from '@/app/context/CartContext'
 
 export default function Navigation() {
   const { data: session } = useSession()
+  const { itemCount } = useCart()
   const [siteName, setSiteName] = useState('Mechatronics Engineering')
   const [logo, setLogo] = useState('')
 
@@ -57,6 +59,19 @@ export default function Navigation() {
                 >
                   <ShoppingCart className="w-5 h-5" />
                   <span>Webshop</span>
+                </Link>
+
+                <Link
+                  href="/cart"
+                  className="relative flex items-center space-x-1 text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-gray-900 text-white text-xs rounded-full flex items-center justify-center">
+                      {itemCount}
+                    </span>
+                  )}
+                  <span>Kosár</span>
                 </Link>
 
                 {session.user?.role === 'ADMIN' && (

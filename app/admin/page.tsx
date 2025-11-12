@@ -13,6 +13,7 @@ import {
   Trash2,
   Plus,
 } from 'lucide-react'
+import FileUpload from '@/app/components/FileUpload'
 
 type Tab = 'users' | 'invitations' | 'products' | 'messages'
 
@@ -368,7 +369,7 @@ export default function AdminPage() {
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   rows={3}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input
                     type="number"
                     placeholder="Ár (Ft)"
@@ -385,14 +386,13 @@ export default function AdminPage() {
                     onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                     className="px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   />
-                  <input
-                    type="url"
-                    placeholder="Kép URL (opcionális)"
-                    value={newProduct.imageUrl}
-                    onChange={(e) => setNewProduct({ ...newProduct, imageUrl: e.target.value })}
-                    className="px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                  />
                 </div>
+                <FileUpload
+                  label="Termék Kép"
+                  folder="products"
+                  currentImage={newProduct.imageUrl}
+                  onUpload={(url) => setNewProduct({ ...newProduct, imageUrl: url })}
+                />
                 <button
                   type="submit"
                   className="w-full px-8 py-3 rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-all"

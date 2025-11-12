@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Search, Filter, Package, ShoppingCart, Send } from 'lucide-react'
+import { Search, Filter, Package, ShoppingCart, Send, Plus } from 'lucide-react'
+import { useCart } from '@/app/context/CartContext'
 
 export default function ShopPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { addItem } = useCart()
   const [products, setProducts] = useState<any[]>([])
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -200,8 +202,19 @@ export default function ShopPage() {
                       {product.price.toLocaleString('hu-HU')} Ft
                     </span>
 
-                    <button className="p-3 rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-all">
-                      <ShoppingCart className="w-5 h-5" />
+                    <button
+                      onClick={() =>
+                        addItem({
+                          id: product.id,
+                          name: product.name,
+                          price: product.price,
+                          imageUrl: product.imageUrl,
+                        })
+                      }
+                      className="flex items-center space-x-2 px-4 py-2 rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-all"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Kosárba</span>
                     </button>
                   </div>
                 </div>
