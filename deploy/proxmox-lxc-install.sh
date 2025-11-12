@@ -59,6 +59,18 @@ if pct status $CTID &> /dev/null; then
 fi
 
 echo -e "${GREEN}[1/6] Creating LXC container...${NC}"
+
+# Build network configuration
+if [ "$IP_ADDRESS" = "dhcp" ]; then
+    NET_CONFIG="name=eth0,bridge=$BRIDGE,ip=dhcp"
+else
+    if [ -n "$GATEWAY" ]; then
+        NET_CONFIG="name=eth0,bridge=$BRIDGE,ip=$IP_ADDRESS,gw=$GATEWAY"
+    else
+        NET_CONFIG="name=eth0,bridge=$BRIDGE,ip=$IP_ADDRESS"
+    fi
+fi
+
 pct create $CTID $TEMPLATE \
     --hostname $HOSTNAME \
     --memory $MEMORY \
@@ -66,7 +78,7 @@ pct create $CTID $TEMPLATE \
     --cores $CORES \
     --rootfs $STORAGE:$DISK_SIZE \
     --password $PASSWORD \
-    --net0 name=eth0,bridge=$BRIDGE,ip=$IP_ADDRESS,gw=$GATEWAY \
+    --net0 $NET_CONFIG \
     --unprivileged 1 \
     --features nesting=1 \
     --onboot 1
