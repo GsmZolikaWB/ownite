@@ -44,9 +44,13 @@ npm install
 echo -e "${BLUE}🗄️  Generating Prisma client...${NC}"
 npx prisma generate
 
-# Run database migrations
+# Run database migrations (skip if database already exists)
 echo -e "${BLUE}🗄️  Running database migrations...${NC}"
-npx prisma migrate deploy
+if npx prisma migrate deploy 2>&1 | grep -q "P3005"; then
+    echo -e "${GREEN}✓ Database already exists and is configured${NC}"
+else
+    npx prisma migrate deploy
+fi
 
 # Build the application
 echo -e "${BLUE}🔨 Building application...${NC}"
