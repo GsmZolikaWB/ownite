@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mechatronics-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mechatronics-portfolio
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/dev.db
+      - NEXTAUTH_SECRET=mechatronics-secret-key-change-this-in-production-12345678
+      - NEXTAUTH_URL=http://localhost:3000
+    volumes:
+      # Persist database
+      - db-data:/app/data
+      # Persist Prisma migrations
+      - ./prisma:/app/prisma
+    command: >
+      sh -c "
+        npx prisma migrate deploy &&
+        npx prisma db seed &&
+        npm start
+      "
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  db-data:
+    driver: local
