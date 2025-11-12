@@ -72,3 +72,66 @@ model ContactMessage {
   @@index([createdAt])
   @@index([read])
 }
+
+model SiteSettings {
+  id            String       @id @default(uuid())
+  siteName      String       @default("Mechatronics Engineering")
+  logo          String?
+  contactEmail  String       @default("info@mechatronics.hu")
+  contactPhone  String       @default("+36 XX XXX XXXX")
+  contactAddress String      @default("Budapest, Magyarország")
+  contactPhoto  String?
+  heroImage     String?
+  aboutText     String?
+  updatedAt     DateTime     @updatedAt
+}
+
+model Order {
+  id            String       @id @default(uuid())
+  userId        String
+  orderNumber   String       @unique
+  status        String       @default("pending")
+  items         OrderItem[]
+  totalAmount   Float
+  paymentMethod String
+  paymentStatus String       @default("pending")
+  paymentId     String?
+  shippingAddress String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+}
+
+model OrderItem {
+  id            String       @id @default(uuid())
+  orderId       String
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String
+  productName   String
+  productPrice  Float
+  quantity      Int
+  totalPrice    Float
+
+  @@index([orderId])
+}
+
+model ProductVariant {
+  id            String       @id @default(uuid())
+  productId     String
+  name          String
+  sku           String       @unique
+  voltage       Float?
+  current       Float?
+  cells         Int?
+  cellType      String?
+  price         Float
+  stock         Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([productId])
+  @@index([sku])
+}

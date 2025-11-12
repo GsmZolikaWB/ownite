@@ -16,6 +16,10 @@ export default function ShopPage() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
 
+  const getFirstName = (fullName: string) => {
+    return fullName?.split(' ')[0] || fullName
+  }
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/login')
@@ -104,7 +108,7 @@ export default function ShopPage() {
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Webshop</h1>
             <p className="text-gray-600">
-              Üdvözöljük, {session?.user?.name}! Böngésszen termékek között.
+              Üdvözöljük, {getFirstName(session?.user?.name || '')}! Böngésszen termékek között.
             </p>
           </div>
 
