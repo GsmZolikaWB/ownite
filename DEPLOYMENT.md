@@ -235,6 +235,74 @@ openssl rand -base64 32
 
 ## 🐛 Troubleshooting
 
+### 🚨 Gyors hibakeresés (Automatikus)
+
+Ha az alkalmazás nem indul, vagy PM2-ben "errored" státuszú:
+
+```bash
+# 1. Diagnosztika (ellenőrzi az összes lehetséges hibát)
+./troubleshoot.sh
+
+# 2. Automatikus javítás (javítja a legtöbb gyakori hibát)
+./fix-deployment.sh
+```
+
+### ❌ PM2 "errored" státusz (30+ restart)
+
+Ez általában ezek egyike miatt történik:
+
+**1. Hiányzó vagy helytelen .env fájl**
+```bash
+# Ellenőrzés
+cat .env
+
+# Ha nincs .env:
+cp .env.example .env
+nano .env  # Állítsd be a helyes értékeket!
+
+# FONTOS: Generálj új NEXTAUTH_SECRET-et:
+openssl rand -base64 32
+# Másold be az .env fájlba: NEXTAUTH_SECRET="<generált-érték>"
+```
+
+**2. Prisma client nincs generálva**
+```bash
+# Ellenőrzés
+ls -la node_modules/.prisma
+
+# Javítás
+npx prisma generate
+```
+
+**3. Database nincs migrálva**
+```bash
+# Ellenőrzés
+ls -la prisma/dev.db
+
+# Javítás
+npx prisma migrate deploy
+```
+
+**4. Build artifacts hiányoznak**
+```bash
+# Ellenőrzés
+ls -la .next
+
+# Javítás
+npm run build
+```
+
+**5. Összes javítás egyben**
+```bash
+pm2 delete mechatronics-portfolio  # Stop hibás instance
+npm install                         # Dependencies
+npx prisma generate                 # Prisma client
+npx prisma migrate deploy          # Database
+npm run build                       # Build
+pm2 start ecosystem.config.js       # Új start
+pm2 save                            # Mentés
+```
+
 ### Build hiba
 
 ```bash
@@ -251,20 +319,29 @@ npx prisma generate
 npx prisma migrate deploy
 ```
 
-### Port foglalt
+### Port foglalt (EADDRINUSE: address already in use :::3000)
 
 ```bash
 # Nézd meg mi fut a 3000-es porton
 lsof -i :3000
-# Öld meg
-kill -9 <PID>
+
+# Öld meg a folyamatot
+lsof -ti:3000 | xargs kill -9
+
+# Vagy PM2-vel
+pm2 delete mechatronics-portfolio
 ```
 
-### Logok
+### Logok vizsgálata
 
 ```bash
-# PM2
-pm2 logs mechatronics-portfolio
+# PM2 logs (LEGJOBB HIBAKERESÉSHEZ!)
+pm2 logs mechatronics-portfolio --lines 50
+pm2 logs mechatronics-portfolio --err  # Csak error logs
+
+# PM2 file logs
+tail -f logs/pm2-error.log
+tail -f logs/pm2-out.log
 
 # Systemd
 sudo journalctl -u mechatronics-portfolio -f
@@ -272,6 +349,17 @@ sudo journalctl -u mechatronics-portfolio -f
 # Next.js
 tail -f .next/trace
 ```
+
+### Gyakori hibák és megoldásaik
+
+| Hiba | Ok | Megoldás |
+|------|-----|----------|
+| `Error: Invalid NEXTAUTH_SECRET` | Hiányzó vagy rossz secret | `openssl rand -base64 32` majd .env-be |
+| `PrismaClientInitializationError` | Prisma client nincs generálva | `npx prisma generate` |
+| `Can't reach database server` | Database fájl hiányzik | `npx prisma migrate deploy` |
+| `EADDRINUSE :::3000` | Port foglalt | `lsof -ti:3000 \| xargs kill -9` |
+| `MODULE_NOT_FOUND` | Dependencies hiányoznak | `npm install` |
+| `Error: ENOENT .next` | Build hiányzik | `npm run build` |
 
 ---
 
