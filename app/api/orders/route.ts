@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     })
 
     // Handle different payment methods
-    let responseData: {
+    const responseData: {
       success: boolean
       orderId: string
       orderNumber: string
